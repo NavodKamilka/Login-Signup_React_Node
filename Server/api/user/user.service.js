@@ -1,4 +1,5 @@
 const pool = require("../../config/database");
+const bcrypt = require("bcrypt")
 
 module.exports = {
 
@@ -19,5 +20,45 @@ module.exports = {
       }
     );
   },
-  
-};
+
+  loginUser: async (data, callBack) => {
+      const user = data.user_Name
+      const password = data.password
+      
+      pool.query(
+        `select user_Name, password from user WHERE user_Name = ?`,
+        [user],
+        async  (error, results, fields) => {
+          console.log("Result123", results.length)
+          if (error) {
+            callBack(error);
+          }
+          if (results.length == 0) {
+            console.log("--------> User does not exist")
+            return callBack(null, results);
+          }else {
+                    const hashedPassword = results[0].password
+                    console.log("hashedPassword",hashedPassword)
+                    try {
+                      //const isMatch =  bcrypt.compare(password, hashedPassword);
+                      //console.log("Check", isMatch);
+                      if (await bcrypt.compare(password, hashedPassword)) {
+                        console.log("---------> Login Successful");
+                        return callBack(null, `${user} is logged in!`);
+                      } else {
+                        console.log("---------> Password Incorrect");
+                        return callBack(null, "Password incorrect!");
+                      }
+                    } catch (error) {
+                      return callBack(error);
+                    }
+          }
+        }
+          
+          // return callBack(null, results);
+        
+      );
+  }
+}
+
+
